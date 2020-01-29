@@ -1,12 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
-import json
-from django.forms.models import model_to_dict
+from django.http import JsonResponse
 from django.views.generic import TemplateView
 from .forms import IdForm
 from .models import ObjectModel
-from django.shortcuts import redirect, render, HttpResponse
-from django.core import serializers
+from django.shortcuts import redirect, render
+
 requests.packages.urllib3.disable_warnings()
 
 
@@ -35,17 +34,13 @@ def DetailView(request, product_id, *args, **kwargs):
     dict1 = ObjectModel.objects.filter(product_id=product_id)
     list1 = []
     for i in dict1:
-        listtemp = json.dumps({
+        temp = {
             'review_title': i.review_title,
             'review_rating': i.review_rating,
             'review_content': i.review_content,
-        })
-        list1.append(listtemp) #######object listtemp is not appending in list1
-    template = 'scraper/deatil.html'
-    context = {
-        'list1': list1
-    }
-    return render(request, template, context)
+        }
+        list1.append(temp)
+    return JsonResponse(list1, safe=False)
 
 
 def scrape(product_id):
@@ -57,43 +52,19 @@ def scrape(product_id):
     content = session.get(url, verify=False).content
     soup = BeautifulSoup(content, 'html.parser')
 
-    reviews = soup.find_all('div', {'class': 'row review-article'})
-    l, m = 0, 0
-    for i in reviews:
-        if m < 10:
-            title = i.find_all('a', {
-                'id': 'ctl00_ctl00_ContentPlaceHolderFooter_ContentPlaceHolderBody_rptreviews_ctl{}{}_lnkTitle'.format(
-                    l, m)})
-        else:
-            title = i.find_all('a', {
-                'id': 'ctl00_ctl00_ContentPlaceHolderFooter_ContentPlaceHolderBody_rptreviews_ctl{}_lnkTitle'.format(
-                    m)})
-        m += 1
-        rating = i.find_all('i', {'class': 'icon-rating rated-star'})
-        message = i.find_all('div', {'class': 'more reviewdata'})
-        x, y = 0, 0
-        message = str(message)
-        # for j in range(len(message)):
-        #     if message[j] == '>':
-        #         x = j
-        #     if message[j] == '<':
-        #         y = j
-        #         break
-        # message = message[x+1:y-1]
+    reviews = soup.find_all('div', {'class': 'review-article'})
 
-        title = str(title)
-        for j in range(len(title)):
-            if title[j] == '>':
-                x = j
-            if title[j] == '<' and title[j + 1] == '/':
-                y = j
-                break
-        title = title[x + 1:y]
-        print(title,len(rating),message)
+    for i in reviews:
+        title = i.find('a').text
+        print("new title: {}".format(title))
+
+        rating = i.find_all('i', {'class': 'icon-rating rated-star'})
+        message = i.find_all('div', {'class': 'reviewdata'})
+        print("Printing  message")
+        msg = [x.text for x in message][0].rsplit("...", 1)[0].strip()
+
         ObjectModel.objects.create(product_id=product_id,
                                    review_title=title,
                                    review_rating=len(rating),
-                                         review_content=message)
+                                   review_content=msg)
     return 0
-
-
