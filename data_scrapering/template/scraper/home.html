@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scraping Data</title>
+</head>
+<body style="background-color: #e8f3f7">
+            <div class="col=6">
+                <div class="Container" style="width:40%; background-color:#fff; border-radius:15px; padding-left: 50px; padding-right: 50px; padding-top:50px; margin-top: 50px; margin-bottom:50px; padding-bottom:50px">
+                           <h1 style="font-weight:800;">Scraping Review Data</h1>
+                            <form method="post" novalidate>
+                                {% csrf_token %}
+                                {{ form.as_p }}
+                                <button type="submit" class="btn btn-primary" style="margin-left:10px; margin-bottom:15px;height: 35px; margin-top: 15px; background-color: #38b38b; border-color: #38b38b;">Scrape</button>
+                            </form>
+                </div>
+            </div>
+  </body>
+</html>
